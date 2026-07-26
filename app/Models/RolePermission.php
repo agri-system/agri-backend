@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class RolePermission extends Model
 {
+	use HasUlids;
+
 	protected $table = 'role_permission';
 	public $incrementing = false;
 
