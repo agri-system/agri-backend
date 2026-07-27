@@ -12,23 +12,26 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * Class User
- * 
+ *
  * @property string $id
  * @property string $last_name
  * @property string $first_name
  * @property string $username
+ * @property string|null $email
+ * @property string|null $avatar_path
  * @property string $password
  * @property string $role_id
  * @property string $status
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property Role $role
  * @property Collection|Permission[] $permissions
  * @property Collection|Site[] $sites
@@ -59,11 +62,22 @@ class User extends Authenticatable
 		'last_name',
 		'first_name',
 		'username',
+		'email',
+		'avatar_path',
 		'password',
 		'role_id',
 		'status',
 		'remember_token'
 	];
+
+	protected $appends = [
+		'avatar_url',
+	];
+
+	public function getAvatarUrlAttribute(): ?string
+	{
+		return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+	}
 
 	public function role()
 	{
