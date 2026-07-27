@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -40,4 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('permissions', [PermissionController::class, 'index']);
     Route::get('permissions/{permission}', [PermissionController::class, 'show']);
+
+    Route::apiResource('users', UserController::class);
+    Route::patch('users/{user}/restore', [UserController::class, 'restore'])->withTrashed();
+    Route::patch('users/{user}/activate', [UserController::class, 'activate']);
+    Route::patch('users/{user}/deactivate', [UserController::class, 'deactivate']);
+    Route::put('users/{user}/roles', [UserController::class, 'updateRole']);
+    Route::delete('users/{user}/roles/{role}', [UserController::class, 'removeRole']);
 });

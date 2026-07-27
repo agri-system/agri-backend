@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
@@ -31,6 +32,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  *
  * @property Role $role
  * @property Collection|Permission[] $permissions
@@ -48,7 +50,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUlids;
+    use HasApiTokens, HasFactory, Notifiable, HasUlids, SoftDeletes;
 
 	protected $table = 'users';
 	public $incrementing = false;
@@ -87,6 +89,7 @@ class User extends Authenticatable
 	public function permissions()
 	{
 		return $this->belongsToMany(Permission::class, 'user_permission')
+					->using(UserPermission::class)
 					->withPivot('id')
 					->withTimestamps();
 	}
@@ -94,6 +97,7 @@ class User extends Authenticatable
 	public function sites()
 	{
 		return $this->belongsToMany(Site::class, 'user_sites')
+					->using(UserSite::class)
 					->withPivot('id')
 					->withTimestamps();
 	}

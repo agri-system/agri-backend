@@ -42,6 +42,7 @@ class Permission extends Model
 	public function roles()
 	{
 		return $this->belongsToMany(Role::class, 'role_permission')
+					->using(RolePermission::class)
 					->withPivot('id')
 					->withTimestamps();
 	}
@@ -49,6 +50,7 @@ class Permission extends Model
 	public function users()
 	{
 		return $this->belongsToMany(User::class, 'user_permission')
+					->using(UserPermission::class)
 					->withPivot('id')
 					->withTimestamps();
 	}
