@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -24,4 +27,17 @@ Route::prefix('profile')->middleware('auth:sanctum')->group(function () {
     Route::put('change-password', [PasswordController::class, 'changePassword']);
     Route::post('avatar', [ProfileController::class, 'updateAvatar']);
     Route::delete('avatar', [ProfileController::class, 'deleteAvatar']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('sessions', [SessionController::class, 'index']);
+    Route::delete('sessions/{token}', [SessionController::class, 'destroy']);
+    Route::delete('sessions', [SessionController::class, 'destroyAll']);
+
+    Route::apiResource('roles', RoleController::class);
+    Route::get('roles/{role}/permissions', [RoleController::class, 'permissions']);
+    Route::put('roles/{role}/permissions', [RoleController::class, 'syncPermissions']);
+
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('permissions/{permission}', [PermissionController::class, 'show']);
 });
