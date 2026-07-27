@@ -10,8 +10,8 @@ use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\User\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\AccountActivationInvite;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -51,30 +51,37 @@ class UserController extends Controller
 
     /**
      * POST /api/users
+     * No password is set here: the account starts "pending" and the user
+     * chooses their own password through the emailed activation link.
      */
     public function store(StoreUserRequest $request)
     {
         $data = $request->validated();
 
-        // No email/SMS channel exists for most field agents: the admin relays this manually.
-        $temporaryPassword = $data['password'] ?? Str::password(12);
+        $activationToken = Str::random(64);
 
         $user = User::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
-            'username' => $data['username'],
-            'email' => $data['email'] ?? null,
-            'password' => Hash::make($temporaryPassword),
+            'username' => $data['username'] ?? null,
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
             'role_id' => $data['role_id'],
+            'platform_access' => $data['platform_access'],
+            'status' => 'pending',
+            'activation_token' => $activationToken,
+            'activation_token_expires_at' => now()->addDays(3),
         ]);
 
         if (! empty($data['site_ids'])) {
             $user->sites()->sync($data['site_ids']);
         }
 
+        $user->notify(new AccountActivationInvite($activationToken));
+
         return response()->json([
             'user' => new UserResource($user->fresh()),
-            'temporary_password' => $temporaryPassword,
+            'message' => "Un email d'activation a été envoyé à l'utilisateur.",
         ], 201);
     }
 
@@ -141,9 +148,19 @@ class UserController extends Controller
 
     /**
      * PATCH /api/users/{id}/activate
+     * Re-enables a previously deactivated account. Distinct from the user's own
+     * first-time activation (POST /api/auth/activation/{token}): a "pending" user
+     * has never set a real password yet, so forcing them active here would just
+     * strand them with a login that can never succeed.
      */
     public function activate(User $user)
     {
+        if ($user->status === 'pending') {
+            return response()->json([
+                'message' => "Ce compte n'a pas encore été activé par l'utilisateur. Renvoyez-lui plutôt le lien d'activation.",
+            ], 422);
+        }
+
         $user->update(['status' => 'active']);
 
         return response()->json([

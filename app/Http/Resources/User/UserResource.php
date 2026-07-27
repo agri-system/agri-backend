@@ -29,8 +29,11 @@ class UserResource extends JsonResource
             'last_name' => $this->last_name,
             'username' => $this->username,
             'email' => $this->email,
+            'phone' => $this->phone,
+            'email_verified_at' => $this->email_verified_at,
             'avatar_url' => $this->avatar_url,
             'status' => $this->status,
+            'platform_access' => $this->platform_access,
             'role' => new RoleResource($this->whenLoaded('role')),
             'permissions' => new PermissionCollection($permissions),
         ];

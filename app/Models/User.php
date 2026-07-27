@@ -23,12 +23,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string $id
  * @property string $last_name
  * @property string $first_name
- * @property string $username
- * @property string|null $email
+ * @property string|null $username
+ * @property string $email
+ * @property string|null $phone
+ * @property Carbon|null $email_verified_at
  * @property string|null $avatar_path
- * @property string $password
+ * @property string|null $password
  * @property string $role_id
  * @property string $status
+ * @property string $platform_access
+ * @property string|null $activation_token
+ * @property Carbon|null $activation_token_expires_at
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -55,21 +60,32 @@ class User extends Authenticatable
 	protected $table = 'users';
 	public $incrementing = false;
 
-	protected $hidden = [
-		'password',
-		'remember_token'
-	];
-
 	protected $fillable = [
 		'last_name',
 		'first_name',
 		'username',
 		'email',
+		'phone',
+		'email_verified_at',
 		'avatar_path',
 		'password',
 		'role_id',
 		'status',
+		'platform_access',
+		'activation_token',
+		'activation_token_expires_at',
 		'remember_token'
+	];
+
+	protected $hidden = [
+		'password',
+		'remember_token',
+		'activation_token',
+	];
+
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'activation_token_expires_at' => 'datetime',
 	];
 
 	protected $appends = [
@@ -79,6 +95,14 @@ class User extends Authenticatable
 	public function getAvatarUrlAttribute(): ?string
 	{
 		return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+	}
+
+	/**
+	 * Whether this user is allowed to log in from the given platform ("web" or "mobile").
+	 */
+	public function hasPlatformAccess(string $platform): bool
+	{
+		return $this->platform_access === 'both' || $this->platform_access === $platform;
 	}
 
 	public function role()

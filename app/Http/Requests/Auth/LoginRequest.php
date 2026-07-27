@@ -14,8 +14,10 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => ['required', 'string'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            // Which client is calling: lets the server enforce per-user platform access.
+            'platform' => ['required', 'string', 'in:web,mobile'],
             'device_name' => ['sometimes', 'string'],
         ];
     }

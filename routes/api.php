@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordController;
 use App\Http\Controllers\Api\PermissionController;
@@ -13,6 +14,8 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('forgot-password', [PasswordController::class, 'forgotPassword']);
     Route::post('reset-password', [PasswordController::class, 'resetPassword']);
+    Route::get('activation/{token}', [ActivationController::class, 'check']);
+    Route::post('activation/{token}', [ActivationController::class, 'activate']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);

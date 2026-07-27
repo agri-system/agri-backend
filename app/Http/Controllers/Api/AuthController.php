@@ -19,17 +19,35 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        $user = User::where('username', $credentials['username'])->first();
+        $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'username' => ['Identifiants incorrects.'],
+                'email' => ['Identifiants incorrects.'],
+            ]);
+        }
+
+        if ($user->status === 'pending') {
+            throw ValidationException::withMessages([
+                'email' => ["Ce compte n'a pas encore été activé. Consultez l'email d'activation qui vous a été envoyé."],
             ]);
         }
 
         if ($user->status !== 'active') {
             throw ValidationException::withMessages([
-                'username' => ['Ce compte est désactivé.'],
+                'email' => ['Ce compte est désactivé.'],
+            ]);
+        }
+
+        if (! $user->hasPlatformAccess($credentials['platform'])) {
+            $allowed = match ($user->platform_access) {
+                'web' => "qu'à la plateforme Web",
+                'mobile' => "qu'à l'application Mobile",
+                default => '',
+            };
+
+            throw ValidationException::withMessages([
+                'platform' => ["Ce compte n'est autorisé {$allowed}. Veuillez vous connecter depuis cette plateforme."],
             ]);
         }
 
