@@ -9,22 +9,36 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * Class User
- * 
+ *
  * @property string $id
  * @property string $last_name
  * @property string $first_name
- * @property string $username
- * @property string $password
+ * @property string|null $username
+ * @property string $email
+ * @property string|null $phone
+ * @property Carbon|null $email_verified_at
+ * @property string|null $avatar_path
+ * @property string|null $password
  * @property string $role_id
  * @property string $status
+ * @property string $platform_access
+ * @property string|null $activation_token
+ * @property Carbon|null $activation_token_expires_at
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ * @property Carbon|null $deleted_at
+ *
  * @property Role $role
  * @property Collection|Permission[] $permissions
  * @property Collection|Site[] $sites
@@ -39,27 +53,57 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class User extends Model
+class User extends Authenticatable
 {
-	use HasUlids;
+    use HasApiTokens, HasFactory, Notifiable, HasUlids, SoftDeletes;
 
 	protected $table = 'users';
 	public $incrementing = false;
-
-	protected $hidden = [
-		'password',
-		'remember_token'
-	];
 
 	protected $fillable = [
 		'last_name',
 		'first_name',
 		'username',
+		'email',
+		'phone',
+		'email_verified_at',
+		'avatar_path',
 		'password',
 		'role_id',
 		'status',
+		'platform_access',
+		'activation_token',
+		'activation_token_expires_at',
 		'remember_token'
 	];
+
+	protected $hidden = [
+		'password',
+		'remember_token',
+		'activation_token',
+	];
+
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'activation_token_expires_at' => 'datetime',
+	];
+
+	protected $appends = [
+		'avatar_url',
+	];
+
+	public function getAvatarUrlAttribute(): ?string
+	{
+		return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+	}
+
+	/**
+	 * Whether this user is allowed to log in from the given platform ("web" or "mobile").
+	 */
+	public function hasPlatformAccess(string $platform): bool
+	{
+		return $this->platform_access === 'both' || $this->platform_access === $platform;
+	}
 
 	public function role()
 	{
@@ -69,6 +113,7 @@ class User extends Model
 	public function permissions()
 	{
 		return $this->belongsToMany(Permission::class, 'user_permission')
+					->using(UserPermission::class)
 					->withPivot('id')
 					->withTimestamps();
 	}
@@ -76,6 +121,7 @@ class User extends Model
 	public function sites()
 	{
 		return $this->belongsToMany(Site::class, 'user_sites')
+					->using(UserSite::class)
 					->withPivot('id')
 					->withTimestamps();
 	}
