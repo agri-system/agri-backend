@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('roles', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            // admin, agent, client, ...
             $table->string('name', 50)->unique();
             $table->string('label', 100)->nullable();
             $table->text('description')->nullable();
